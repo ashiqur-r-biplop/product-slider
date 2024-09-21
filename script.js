@@ -1,8 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
   const sliderContainer = document.querySelector(".sliders");
   const sliders = document.querySelectorAll(".slider");
-  const sliderCount = sliders.length;
+  const nextBtn = document.getElementById("next");
+  const prevBtn = document.getElementById("prev");
   let currentIndex = 0;
+  const sliderCount = sliders.length; // Should be 6 (the actual number of sliders, excluding clones)
   let autoSlideInterval;
 
   // Clone first and last slider for infinite effect
@@ -12,30 +14,49 @@ document.addEventListener("DOMContentLoaded", function () {
   sliderContainer.appendChild(firstClone);
   sliderContainer.insertBefore(lastClone, sliders[0]);
 
+  const totalSlidesWithClones = sliderCount + 2; // Total slides including clones (for proper calculations)
+
+  // Adjust the initial transform to start at the real first slide
+  const startSlider = () => {
+    const screenWidth = window.innerWidth;
+    const slidesToShow = screenWidth <= 550 ? 1 : 4; // Show 1 slide on mobile, 4 on larger screens
+    sliderContainer.style.transform = `translateX(-${100 / slidesToShow}%)`;
+  };
+
   const updateSliderPosition = () => {
     const screenWidth = window.innerWidth;
-    const slidesToShow = screenWidth <= 550 ? 1 : 3; // Show 1 slide on mobile, 3 on larger screens
-    if (slidesToShow && currentIndex <= 5) {
-      console.log((currentIndex + 1) * (100 / slidesToShow));
-      sliderContainer.style.transform = `translateX(-${
-        (currentIndex + 1) * (100 / slidesToShow) - 2
-      }%)`;
-    } else if (slidesToShow && currentIndex >= 6 && currentIndex <= 11) {
-      sliderContainer.style.transform = `translateX(-${
-        (currentIndex + 1) * (100 / slidesToShow) - 1
-      }%)`;
-    } else if (slidesToShow && currentIndex >= 12 && currentIndex <= 17) {
-      sliderContainer.style.transform = `translateX(-${
-        (currentIndex + 1) * (100 / slidesToShow) + 2
-      }%)`;
-    } else if (slidesToShow && currentIndex >= 18 && currentIndex <= 22) {
-      sliderContainer.style.transform = `translateX(-${
-        (currentIndex + 1) * (100 / slidesToShow) + 3
-      }%)`;
-    }
+    const slidesToShow = screenWidth <= 550 ? 1 : 4;
+
+    sliderContainer.style.transition = "transform 0.3s ease-in-out";
     sliderContainer.style.transform = `translateX(-${
       (currentIndex + 1) * (100 / slidesToShow)
     }%)`;
+  };
+
+  const resetSliderPosition = () => {
+    const screenWidth = window.innerWidth;
+    const slidesToShow = screenWidth <= 550 ? 1 : 4;
+
+    // When moving forward, check if we've reached the last clone and reset to the first real slide
+    if (currentIndex >= sliderCount && screenWidth > 550) {
+      sliderContainer.style.transition = "none"; // Disable transition
+      currentIndex = 0; // Go to the first real slide
+      sliderContainer.style.transform = `translateX(-${100 / slidesToShow}%)`;
+    }
+
+    // When moving backward, check if we've reached the first clone and reset to the last real slide
+    if (currentIndex < 0) {
+      sliderContainer.style.transition = "none"; // Disable transition
+      currentIndex = sliderCount - 1; // Go to the last real slide
+      sliderContainer.style.transform = `translateX(-${
+        sliderCount * (100 / slidesToShow)
+      }%)`;
+    }
+
+    // Re-enable the transition after the reset
+    setTimeout(() => {
+      sliderContainer.style.transition = "transform 0.3s ease-in-out";
+    }, 50);
   };
 
   const startAutoSlide = () => {
@@ -44,14 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
       updateSliderPosition();
 
       if (currentIndex >= sliderCount) {
-        setTimeout(() => {
-          sliderContainer.style.transition = "none";
-          currentIndex = 0;
-          updateSliderPosition();
-          setTimeout(() => {
-            sliderContainer.style.transition = "transform 0.3s ease-in-out";
-          }, 50);
-        }, 300);
+        setTimeout(resetSliderPosition, 300);
       }
     }, 3000); // Adjust slide duration as needed
   };
@@ -60,14 +74,52 @@ document.addEventListener("DOMContentLoaded", function () {
     clearInterval(autoSlideInterval);
   };
 
+  // Add next button functionality
+  nextBtn.addEventListener("click", () => {
+    currentIndex++;
+    updateSliderPosition();
+
+    if (currentIndex >= sliderCount) {
+      setTimeout(resetSliderPosition, 300);
+    }
+  });
+
+  // Add previous button functionality
+  prevBtn.addEventListener("click", () => {
+    currentIndex--;
+    updateSliderPosition();
+
+    if (currentIndex < 0) {
+      setTimeout(resetSliderPosition, 300);
+    }
+  });
+
   // Initialize slider position and start auto-slide
-  updateSliderPosition();
+  startSlider();
   startAutoSlide();
 
   // Pause on hover and resume on mouse leave
-  sliderContainer.addEventListener("mouseover", stopAutoSlide);
-  sliderContainer.addEventListener("mouseleave", startAutoSlide);
+  const resumeAutoSlide = () => {
+    startAutoSlide(); // Resume auto-slide
+  };
+
+  const pauseAutoSlide = () => {
+    stopAutoSlide(); // Pause auto-slide
+  };
+
+  // Event listeners to pause/resume auto-slide when hovering over the slider container or buttons
+  sliderContainer.addEventListener("mouseover", pauseAutoSlide);
+  sliderContainer.addEventListener("mouseleave", resumeAutoSlide);
+
+  nextBtn.addEventListener("mouseover", pauseAutoSlide);
+  nextBtn.addEventListener("mouseleave", resumeAutoSlide);
+
+  prevBtn.addEventListener("mouseover", pauseAutoSlide);
+  prevBtn.addEventListener("mouseleave", resumeAutoSlide);
 
   // Update slider position on window resize
-  window.addEventListener("resize", updateSliderPosition);
+  window.addEventListener("resize", startSlider);
+
+  // Reset slider when animation ends on clone slides
+  sliderContainer.addEventListener("transitionend", resetSliderPosition);
 });
