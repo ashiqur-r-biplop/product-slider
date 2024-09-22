@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
       sliderContainer.style.transition = "none"; // Disable transition
 
       // Reset to the first real slide (for both desktop and mobile)
-      currentIndex = 0;
+      currentIndex = 0; 
       mobileSlides = 0;
       sliderContainer.style.transform = `translateX(-${100 / slidesToShow}%)`;
     }
