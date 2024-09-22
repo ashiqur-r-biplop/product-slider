@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const nextBtn = document.getElementById("next");
   const prevBtn = document.getElementById("prev");
   let currentIndex = 0;
+  let mobileSlides = 0;
   const sliderCount = sliders.length; // Should be 6 (the actual number of sliders, excluding clones)
   let autoSlideInterval;
 
@@ -20,7 +21,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const startSlider = () => {
     const screenWidth = window.innerWidth;
     const slidesToShow = screenWidth <= 550 ? 1 : 4; // Show 1 slide on mobile, 4 on larger screens
-    sliderContainer.style.transform = `translateX(-${100 / slidesToShow}%)`;
+    sliderContainer.style.transform = `translateX(-${
+      slidesToShow === 4
+        ? 100 / slidesToShow
+        : 100 / slidesToShow + mobileSlides
+    }%)`;
   };
 
   const updateSliderPosition = () => {
@@ -29,25 +34,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
     sliderContainer.style.transition = "transform 0.3s ease-in-out";
     sliderContainer.style.transform = `translateX(-${
-      (currentIndex + 1) * (100 / slidesToShow)
+      slidesToShow === 4
+        ? (currentIndex + 1) * (100 / slidesToShow)
+        : (currentIndex + 1) * (100 / slidesToShow) + mobileSlides
     }%)`;
   };
-
   const resetSliderPosition = () => {
     const screenWidth = window.innerWidth;
     const slidesToShow = screenWidth <= 550 ? 1 : 4;
 
     // When moving forward, check if we've reached the last clone and reset to the first real slide
-    if (currentIndex >= sliderCount && screenWidth > 550) {
+    if (currentIndex >= sliderCount) {
       sliderContainer.style.transition = "none"; // Disable transition
-      currentIndex = 0; // Go to the first real slide
+
+      // Reset to the first real slide (for both desktop and mobile)
+      currentIndex = 0;
+      mobileSlides = 0;
       sliderContainer.style.transform = `translateX(-${100 / slidesToShow}%)`;
     }
-
     // When moving backward, check if we've reached the first clone and reset to the last real slide
-    if (currentIndex < 0) {
+    else if (currentIndex < 0) {
       sliderContainer.style.transition = "none"; // Disable transition
-      currentIndex = sliderCount - 1; // Go to the last real slide
+
+      // Go to the last real slide (for both desktop and mobile)
+      currentIndex = sliderCount - 1;
       sliderContainer.style.transform = `translateX(-${
         sliderCount * (100 / slidesToShow)
       }%)`;
@@ -59,9 +69,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 50);
   };
 
+  
   const startAutoSlide = () => {
     autoSlideInterval = setInterval(() => {
       currentIndex++;
+      mobileSlides = mobileSlides + 1.5;
       updateSliderPosition();
 
       if (currentIndex >= sliderCount) {
@@ -73,10 +85,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const stopAutoSlide = () => {
     clearInterval(autoSlideInterval);
   };
-
-  // Add next button functionality
   nextBtn.addEventListener("click", () => {
     currentIndex++;
+
+    // Update mobileSlides only for mobile screens
+    if (window.innerWidth <= 550) {
+      mobileSlides += 1.5;
+    }
+
     updateSliderPosition();
 
     if (currentIndex >= sliderCount) {
@@ -84,9 +100,14 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Add next button functionality
+  
+
   // Add previous button functionality
   prevBtn.addEventListener("click", () => {
     currentIndex--;
+    mobileSlides = mobileSlides - 1.5;
+
     updateSliderPosition();
 
     if (currentIndex < 0) {
